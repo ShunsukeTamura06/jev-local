@@ -19,7 +19,7 @@ Apache-2.0 は複製と再配布を許可します。上記のライセンス文
 - Python 3.12、`python3.12-venv` 相当、Git、`curl`、`tar`、`sha256sum`
 - モデル取得時に GitHub へ HTTPS 接続できること。private repository の Release を使う場合は `gh auth login` 済みの [GitHub CLI](https://cli.github.com/) または `GH_TOKEN` が必要
 - インストール時に Python パッケージインデックスへ接続できること。実行時のネットワーク接続は不要
-- 圧縮ファイルと展開済みモデルを置くため十分な EBS 空き容量（目安 25 GiB 以上）
+- 圧縮ファイル、展開済みモデル、CUDA 対応 Python パッケージを置くため十分な EBS 空き容量（目安 40 GiB 以上）
 
 モデルは約 9.3 GB のベース重みと約 129 MB の Kev アダプターです。fallback の大容量ファイルは別ブランチに置き、`--single-branch` の clone では取得しません。Git LFS は使用していません。通常 Git に大きな archive を置く方式は [GitHub の推奨リポジトリ容量](https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-large-files-on-github)を超えますが、Release asset が使えない場合の搬入経路を満たすために採用しています。
 
