@@ -25,4 +25,22 @@ if "$fixture/project/scripts/install_model.sh" --git-only; then
   exit 1
 fi
 [[ ! -e "$fixture/project/model/base/config.json" ]]
+git init --bare "$fixture/remote.git" >/dev/null
+mkdir -p "$fixture/publisher/scripts" "$fixture/publisher/model-parts"
+cp "$root/scripts/install_model.sh" "$fixture/publisher/scripts/"
+git -C "$fixture/publisher" init -b main >/dev/null
+git -C "$fixture/publisher" add scripts/install_model.sh
+git -C "$fixture/publisher" -c user.name=Test -c user.email=test@example.com commit -m 'test: installer' >/dev/null
+git -C "$fixture/publisher" remote add origin "$fixture/remote.git"
+git -C "$fixture/publisher" push origin main >/dev/null
+git --git-dir="$fixture/remote.git" symbolic-ref HEAD refs/heads/main
+git -C "$fixture/publisher" switch -c model-parts-v1 >/dev/null
+cp "$fixture/archive.tar.gz" "$fixture/publisher/model-parts/model.tar.gz.part-0000"
+cp "$fixture/project/model-parts/model.parts" "$fixture/project/model-parts/model.sha256" "$fixture/publisher/model-parts/"
+git -C "$fixture/publisher" add model-parts
+git -C "$fixture/publisher" -c user.name=Test -c user.email=test@example.com commit -m 'test: model parts' >/dev/null
+git -C "$fixture/publisher" push origin model-parts-v1 >/dev/null
+git clone "$fixture/remote.git" "$fixture/consumer" >/dev/null
+"$fixture/consumer/scripts/install_model.sh" --git-only
+[[ -f "$fixture/consumer/model/base/config.json" && -f "$fixture/consumer/model/adapter/head.pt" ]]
 echo 'installer success and checksum failure verified'

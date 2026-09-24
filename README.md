@@ -1,6 +1,6 @@
 # jev-local
 
-Kev-4B を EC2 g5.4xlarge（x86_64、NVIDIA A10G）で動かすためのローカル decision API です。`choice`、`noul`（yes/no）、`score` を 1 回のリクエストで処理する `/v1/systemone` を提供します。モデルウェイトは GitHub Release と通常 Git の両方に格納し、実行時は `model/` のローカルファイルだけを読みます。
+Kev-4B を EC2 g5.4xlarge（x86_64、NVIDIA A10G）で動かすためのローカル decision API です。`choice`、`noul`（yes/no）、`score` を 1 回のリクエストで処理する `/v1/systemone` を提供します。モデルウェイトは GitHub Release と通常 Git の `model-parts-v1` ブランチの両方に格納し、実行時は `model/` のローカルファイルだけを読みます。
 
 ## モデルと再配布条件
 
@@ -19,9 +19,9 @@ Apache-2.0 は複製と再配布を許可します。上記のライセンス文
 - Python 3.12、`python3.12-venv` 相当、Git、`curl`、`tar`、`sha256sum`
 - モデル取得時に GitHub へ HTTPS 接続できること。private repository の Release を使う場合は `gh auth login` 済みの [GitHub CLI](https://cli.github.com/) または `GH_TOKEN` が必要
 - インストール時に Python パッケージインデックスへ接続できること。実行時のネットワーク接続は不要
-- clone、圧縮ファイル、展開済みモデルを置くため十分な EBS 空き容量（目安 30 GiB 以上）
+- 圧縮ファイルと展開済みモデルを置くため十分な EBS 空き容量（目安 25 GiB 以上）
 
-モデルは約 9.3 GB のベース重みと約 129 MB の Kev アダプターです。通常 Git の fallback を含むため clone 自体も大容量です。Git LFS は使用していません。
+モデルは約 9.3 GB のベース重みと約 129 MB の Kev アダプターです。fallback の大容量ファイルは別ブランチに置き、通常の clone では取得しません。Git LFS は使用していません。
 
 ## EC2 でのセットアップ
 
@@ -43,7 +43,7 @@ cd jev-local
 ./scripts/smoke_test.sh
 ```
 
-`install_model.sh` は Release asset を取得し、`model.parts` の順に結合したストリームの SHA-256 を検証してから `model/` に展開します。Release asset の取得に失敗した場合は `model-parts/` の通常 Git ファイルへ自動で切り替えます。fallback を明示するには `./scripts/install_model.sh --git-only`、Release のみ試すには `--release-only` を使います。再インストールするには `model/` を削除して実行します。
+`install_model.sh` は Release asset を取得し、`model.parts` の順に結合したストリームの SHA-256 を検証してから `model/` に展開します。Release asset の取得に失敗した場合は `model-parts-v1` ブランチの通常 Git ファイルを fetch して使います。fallback を明示するには `./scripts/install_model.sh --git-only`、Release のみ試すには `--release-only` を使います。再インストールするには `model/` を削除して実行します。
 
 `start.sh` は CUDA がない場合に明示的なエラーで終了します。GPU メモリを節約するため bf16、未結合 LoRA、CUDA graph 無効を初期値とします。CUDA graph を試す場合は `KEV_CUDA_GRAPHS=1 ./scripts/start.sh` を指定します。初期値では `127.0.0.1:8008` のみで待ち受けます。外部へ公開する場合は `KEV_API_KEY` を設定し、適切な認証付きプロキシを介してください。
 
@@ -61,7 +61,7 @@ curl -sS http://127.0.0.1:8008/v1/systemone \
 
 サーバーは `model/base` と `model/adapter` の絶対ローカルパスを指定し、`HF_HUB_OFFLINE=1`、`TRANSFORMERS_OFFLINE=1` を設定します。Kev 側が保持する元の Hugging Face モデル ID は実行時にローカルパスで上書きします。起動時・推論時に Hugging Face への通信は必要ありません。
 
-再梱包は `scripts/package_model.py` を実行します。これは固定コミットのベースと Kev Release から別途取得したアダプターを使い、95 MiB ごとの `model.tar.gz.part-0000` 形式、`model.parts`、`model.sha256` を生成します。通常運用では固定済みの Release と Git のファイルをそのまま使用します。ライセンス、固定版、SHA-256 を変更する場合は同時に README と Release tag を更新してください。
+再梱包は `scripts/package_model.py` を実行します。これは固定コミットのベースと Kev Release のアダプターを取得し、95 MiB ごとの `model.tar.gz.part-0000` 形式、`model.parts`、`model.sha256` を生成します。通常運用では固定済みの Release と Git のファイルをそのまま使用します。ライセンス、固定版、SHA-256 を変更する場合は同時に README、fallback ブランチ、Release tag を更新してください。
 
 ## 検証範囲
 
