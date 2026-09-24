@@ -17,10 +17,20 @@ if [[ -f model/.installed.sha256 && -f model/base/config.json && -f model/adapte
 fi
 temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/jev-model.XXXXXX")"
 trap 'rm -rf "$temp_dir"' EXIT
+release_parts_complete() {
+  local directory="$1" part count=0
+  [[ -s "$directory/model.parts" && -s "$directory/model.sha256" ]] || return 1
+  while IFS= read -r part; do
+    [[ "$part" =~ ^model\.tar\.gz\.part-[0-9]{4}$ && -s "$directory/$part" ]] || return 1
+    count=$((count + 1))
+  done < "$directory/model.parts"
+  [[ "$count" -gt 0 ]]
+}
 source_dir="$temp_dir"
 fallback_commit=""
 if [[ "$mode" != --git-only ]] && command -v gh >/dev/null 2>&1; then
-  if gh release download "$tag" -R "$repo" -D "$temp_dir" -p 'model.tar.gz.part-*' -p 'model.sha256' -p 'model.parts'; then
+  if gh release download "$tag" -R "$repo" -D "$temp_dir" -p 'model.tar.gz.part-*' -p 'model.sha256' -p 'model.parts' &&
+     release_parts_complete "$temp_dir"; then
     echo 'GitHub Release からモデルを取得しました。'
   elif [[ "$mode" == --release-only ]]; then
     echo 'Release asset の取得に失敗しました。' >&2

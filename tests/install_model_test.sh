@@ -44,4 +44,10 @@ git -C "$fixture/publisher" push origin model-parts-v1 >/dev/null
 git clone "$fixture/remote.git" "$fixture/consumer" >/dev/null
 MODEL_EXPECTED_SHA256="$digest" "$fixture/consumer/scripts/install_model.sh" --git-only
 [[ -f "$fixture/consumer/model/base/config.json" && -f "$fixture/consumer/model/adapter/head.pt" ]]
+git clone "$fixture/remote.git" "$fixture/consumer-partial-release" >/dev/null
+mkdir -p "$fixture/fake-bin"
+printf '#!/usr/bin/env bash\nexit 0\n' > "$fixture/fake-bin/gh"
+chmod +x "$fixture/fake-bin/gh"
+PATH="$fixture/fake-bin:$PATH" MODEL_EXPECTED_SHA256="$digest" "$fixture/consumer-partial-release/scripts/install_model.sh"
+[[ -f "$fixture/consumer-partial-release/model/base/config.json" ]]
 echo 'installer success and checksum failure verified'
