@@ -5,6 +5,8 @@ fixture="$(mktemp -d "${TMPDIR:-/tmp}/jev-install-test.XXXXXX")"
 trap 'rm -rf "$fixture"' EXIT
 mkdir -p "$fixture/project/scripts" "$fixture/project/model-parts" "$fixture/source/model/base" "$fixture/source/model/adapter"
 cp "$root/scripts/install_model.sh" "$fixture/project/scripts/"
+mkdir -p "$fixture/project/model"
+printf '\n' > "$fixture/project/model/.gitkeep"
 printf '{}\n' > "$fixture/source/model/base/config.json"
 printf 'test\n' > "$fixture/source/model/adapter/head.pt"
 tar -czf "$fixture/archive.tar.gz" -C "$fixture/source" model
@@ -18,6 +20,7 @@ fi
 printf '%s  model.tar.gz\n' "$digest" > "$fixture/project/model-parts/model.sha256"
 MODEL_EXPECTED_SHA256="$digest" "$fixture/project/scripts/install_model.sh" --git-only
 [[ -f "$fixture/project/model/base/config.json" && -f "$fixture/project/model/adapter/head.pt" ]]
+printf '\n' | cmp - "$fixture/project/model/.gitkeep"
 MODEL_EXPECTED_SHA256="$digest" "$fixture/project/scripts/install_model.sh" --git-only
 rm -rf "$fixture/project/model"
 printf 'corrupt\n' >> "$fixture/project/model-parts/model.tar.gz.part-0000"
