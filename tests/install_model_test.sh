@@ -18,6 +18,7 @@ fi
 printf '%s  model.tar.gz\n' "$digest" > "$fixture/project/model-parts/model.sha256"
 MODEL_EXPECTED_SHA256="$digest" "$fixture/project/scripts/install_model.sh" --git-only
 [[ -f "$fixture/project/model/base/config.json" && -f "$fixture/project/model/adapter/head.pt" ]]
+MODEL_EXPECTED_SHA256="$digest" "$fixture/project/scripts/install_model.sh" --git-only
 rm -rf "$fixture/project/model"
 printf 'corrupt\n' >> "$fixture/project/model-parts/model.tar.gz.part-0000"
 if MODEL_EXPECTED_SHA256="$digest" "$fixture/project/scripts/install_model.sh" --git-only; then

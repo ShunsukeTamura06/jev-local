@@ -10,7 +10,8 @@ if [[ "$mode" != auto && "$mode" != --git-only && "$mode" != --release-only ]]; 
   echo 'usage: ./scripts/install_model.sh [--git-only|--release-only]' >&2
   exit 2
 fi
-if [[ -f model/.installed.sha256 && -f model/base/config.json && -f model/adapter/head.pt ]]; then
+if [[ -f model/.installed.sha256 && -f model/base/config.json && -f model/adapter/head.pt ]] &&
+   [[ "$(cat model/.installed.sha256)" == "$pinned_sha256" ]]; then
   echo 'モデルはインストール済みです。再取得には model/ を削除してください。'
   exit 0
 fi
