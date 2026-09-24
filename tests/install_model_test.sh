@@ -16,11 +16,11 @@ else
   digest="$(shasum -a 256 "$fixture/archive.tar.gz" | awk '{print $1}')"
 fi
 printf '%s  model.tar.gz\n' "$digest" > "$fixture/project/model-parts/model.sha256"
-"$fixture/project/scripts/install_model.sh" --git-only
+MODEL_EXPECTED_SHA256="$digest" "$fixture/project/scripts/install_model.sh" --git-only
 [[ -f "$fixture/project/model/base/config.json" && -f "$fixture/project/model/adapter/head.pt" ]]
 rm -rf "$fixture/project/model"
 printf 'corrupt\n' >> "$fixture/project/model-parts/model.tar.gz.part-0000"
-if "$fixture/project/scripts/install_model.sh" --git-only; then
+if MODEL_EXPECTED_SHA256="$digest" "$fixture/project/scripts/install_model.sh" --git-only; then
   echo '破損した part が受け入れられました' >&2
   exit 1
 fi
@@ -41,6 +41,6 @@ git -C "$fixture/publisher" add model-parts
 git -C "$fixture/publisher" -c user.name=Test -c user.email=test@example.com commit -m 'test: model parts' >/dev/null
 git -C "$fixture/publisher" push origin model-parts-v1 >/dev/null
 git clone "$fixture/remote.git" "$fixture/consumer" >/dev/null
-"$fixture/consumer/scripts/install_model.sh" --git-only
+MODEL_EXPECTED_SHA256="$digest" "$fixture/consumer/scripts/install_model.sh" --git-only
 [[ -f "$fixture/consumer/model/base/config.json" && -f "$fixture/consumer/model/adapter/head.pt" ]]
 echo 'installer success and checksum failure verified'

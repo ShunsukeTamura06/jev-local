@@ -45,7 +45,7 @@ cd jev-local
 ./scripts/smoke_test.sh
 ```
 
-`install_model.sh` は Release asset を取得し、`model.parts` の順に結合したストリームの SHA-256 を検証してから `model/` に展開します。Release asset の取得に失敗した場合は `model-parts-v1` ブランチの通常 Git ファイルを fetch して使います。fallback を明示するには `./scripts/install_model.sh --git-only`、Release のみ試すには `--release-only` を使います。再インストールするには `model/` を削除して実行します。
+`install_model.sh` は Release asset を取得し、`model.parts` の順に結合したストリームの SHA-256 を manifest とスクリプト内の固定値に照らしてから `model/` に展開します。Release asset の取得に失敗した場合は `model-parts-v1` ブランチの通常 Git ファイルを fetch して使います。fallback を明示するには `./scripts/install_model.sh --git-only`、Release のみ試すには `--release-only` を使います。再インストールするには `model/` を削除して実行します。
 
 `start.sh` は CUDA がない場合に明示的なエラーで終了します。GPU メモリを節約するため bf16、未結合 LoRA、CUDA graph 無効を初期値とします。CUDA graph を試す場合は `KEV_CUDA_GRAPHS=1 ./scripts/start.sh` を指定します。初期値では `127.0.0.1:8008` のみで待ち受けます。外部へ公開する場合は `KEV_API_KEY` を設定し、適切な認証付きプロキシを介してください。
 
@@ -63,7 +63,7 @@ curl -sS http://127.0.0.1:8008/v1/systemone \
 
 サーバーは `model/base` と `model/adapter` の絶対ローカルパスを指定し、`HF_HUB_OFFLINE=1`、`TRANSFORMERS_OFFLINE=1` を設定します。Kev 側が保持する元の Hugging Face モデル ID は実行時にローカルパスで上書きします。起動時・推論時に Hugging Face への通信は必要ありません。
 
-再梱包は `scripts/package_model.py` を実行します。これは固定コミットのベースと Kev Release のアダプターを取得し、95 MiB ごとの `model.tar.gz.part-0000` 形式、`model.parts`、`model.sha256` を生成します。通常運用では固定済みの Release と Git のファイルをそのまま使用します。ライセンス、固定版、SHA-256 を変更する場合は同時に README、fallback ブランチ、Release tag を更新してください。
+再梱包は `scripts/package_model.py` を実行します。これは固定コミットのベースと Kev Release のアダプターを取得し、95 MiB ごとの `model.tar.gz.part-0000` 形式、`model.parts`、`model.sha256` を生成します。通常運用では固定済みの Release と Git のファイルをそのまま使用します。ライセンス、固定版、SHA-256 を変更する場合は同時に README、`install_model.sh` の固定値、fallback ブランチ、Release tag を更新してください。
 
 ## 検証範囲
 

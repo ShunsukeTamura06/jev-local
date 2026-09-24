@@ -4,6 +4,7 @@ cd "$(dirname "$0")/.."
 repo="${GH_REPO:-ShunsukeTamura06/jev-local}"
 tag="${MODEL_RELEASE_TAG:-model-v1}"
 fallback_ref="${MODEL_FALLBACK_REF:-model-parts-v1}"
+pinned_sha256="${MODEL_EXPECTED_SHA256:-a76e5cc80e7a12ca1b9743f1661c5b0fc69fd3522b0d7ce62de09ff56c517a5a}"
 mode="${1:-auto}"
 if [[ "$mode" != auto && "$mode" != --git-only && "$mode" != --release-only ]]; then
   echo 'usage: ./scripts/install_model.sh [--git-only|--release-only]' >&2
@@ -66,6 +67,7 @@ stream_parts() {
 }
 expected="$(awk '{print $1}' "$source_dir/model.sha256")"
 [[ "$expected" =~ ^[0-9a-f]{64}$ ]] || { echo '不正な SHA-256 manifest' >&2; exit 1; }
+[[ "$expected" == "$pinned_sha256" ]] || { echo 'model.sha256 がこの版の固定値と一致しません' >&2; exit 1; }
 if command -v sha256sum >/dev/null 2>&1; then
   actual="$(stream_parts | sha256sum | awk '{print $1}')"
 else
