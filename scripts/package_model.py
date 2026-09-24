@@ -22,7 +22,11 @@ class SplitWriter:
     """圧縮済みの連続バイト列を固定サイズの Git 通常ファイルに書く。"""
 
     def __init__(self, directory: Path) -> None:
-        """出力先と SHA-256 状態を初期化する。"""
+        """出力先と SHA-256 状態を初期化する。
+
+        Args:
+            directory: 分割ファイルの出力先。
+        """
         self.directory = directory
         self.index = 0
         self.current = None
@@ -31,11 +35,22 @@ class SplitWriter:
         self.parts = []
 
     def writable(self) -> bool:
-        """gzip の書き込み可能インターフェースを示す。"""
+        """gzip の書き込み可能インターフェースを示す。
+
+        Returns:
+            常に True。
+        """
         return True
 
     def write(self, data: bytes) -> int:
-        """バイト列を境界で分割しながら保存する。"""
+        """バイト列を境界で分割しながら保存する。
+
+        Args:
+            data: 圧縮済みのバイト列。
+
+        Returns:
+            保存したバイト数。
+        """
         self.digest.update(data)
         offset = 0
         while offset < len(data):
@@ -68,7 +83,14 @@ class SplitWriter:
 
 
 def sha256(path: Path) -> str:
-    """ファイルの SHA-256 を計算する。"""
+    """ファイルの SHA-256 を計算する。
+
+    Args:
+        path: 検証するファイル。
+
+    Returns:
+        16 進数の SHA-256。
+    """
     digest = hashlib.sha256()
     with path.open("rb") as stream:
         for block in iter(lambda: stream.read(8 * 1024 * 1024), b""):
@@ -77,7 +99,20 @@ def sha256(path: Path) -> str:
 
 
 def download(path: str, expected_size: int, expected_sha256: str | None, temp: Path) -> Path:
-    """固定リビジョンのファイルを再開可能な curl で取得して検証する。"""
+    """固定リビジョンのファイルを再開可能な curl で取得して検証する。
+
+    Args:
+        path: ベースモデル内の相対パス。
+        expected_size: 期待するバイト数。
+        expected_sha256: LFS オブジェクトの SHA-256。通常 Git ファイルなら None。
+        temp: 一時ダウンロード先。
+
+    Returns:
+        検証済みファイルのパス。
+
+    Raises:
+        RuntimeError: サイズまたは SHA-256 が一致しない場合。
+    """
     url = f"https://huggingface.co/{BASE_REPO}/resolve/{BASE_REVISION}/{path}"
     if temp.exists() and temp.stat().st_size > expected_size:
         temp.unlink()
@@ -90,7 +125,13 @@ def download(path: str, expected_size: int, expected_sha256: str | None, temp: P
 
 
 def add_file(archive: tarfile.TarFile, source: Path, destination: str) -> None:
-    """再現可能なメタデータでファイルを archive に追加する。"""
+    """再現可能なメタデータでファイルを archive に追加する。
+
+    Args:
+        archive: 書き込み中の tar archive。
+        source: ローカルの入力ファイル。
+        destination: archive 内のパス。
+    """
     info = tarfile.TarInfo(destination)
     info.size = source.stat().st_size
     info.mtime = 0
@@ -100,7 +141,17 @@ def add_file(archive: tarfile.TarFile, source: Path, destination: str) -> None:
 
 
 def fetch_adapter(directory: Path) -> Path:
-    """Kev の固定 Release asset を取得し、SHA-256 を確認して展開する。"""
+    """Kev の固定 Release asset を取得し、SHA-256 を確認して展開する。
+
+    Args:
+        directory: ダウンロードと展開に使う一時ディレクトリ。
+
+    Returns:
+        検証済みアダプターのディレクトリ。
+
+    Raises:
+        RuntimeError: asset の SHA-256 または必須ファイルが不正な場合。
+    """
     subprocess.run(
         ["gh", "release", "download", "kev-family", "-R", "jaredpalmer/kev", "-p", "kev-4b.tar.gz", "-D", str(directory)],
         check=True,
