@@ -1,0 +1,21 @@
+name: verify
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  code-and-installer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install pydantic==2.12.5
+      - run: python -m unittest discover -s tests -p 'test_*.py' -v
+      - run: tests/install_model_test.sh
+      - run: python -m compileall -q app kev scripts/package_model.py
+      - run: bash -n scripts/*.sh tests/*.sh

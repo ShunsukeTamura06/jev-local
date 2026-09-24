@@ -15,18 +15,20 @@ Apache-2.0 は複製と再配布を許可します。上記のライセンス文
 ## 必要な環境
 
 - Amazon Linux 2023 または同等の glibc 2.28 以降を備えた x86_64 Linux
-- NVIDIA A10G 24 GiB、利用可能な CUDA 対応ドライバー
+- NVIDIA A10G 24 GiB、[CUDA 12.8 に対応する Linux ドライバー 570.26 以降](https://docs.nvidia.com/cuda/archive/12.8.0/cuda-toolkit-release-notes/)
 - Python 3.12、`python3.12-venv` 相当、Git、`curl`、`tar`、`sha256sum`
 - モデル取得時に GitHub へ HTTPS 接続できること。private repository の Release を使う場合は `gh auth login` 済みの [GitHub CLI](https://cli.github.com/) または `GH_TOKEN` が必要
 - インストール時に Python パッケージインデックスへ接続できること。実行時のネットワーク接続は不要
 - 圧縮ファイルと展開済みモデルを置くため十分な EBS 空き容量（目安 25 GiB 以上）
 
-モデルは約 9.3 GB のベース重みと約 129 MB の Kev アダプターです。fallback の大容量ファイルは別ブランチに置き、通常の clone では取得しません。Git LFS は使用していません。
+モデルは約 9.3 GB のベース重みと約 129 MB の Kev アダプターです。fallback の大容量ファイルは別ブランチに置き、`--single-branch` の clone では取得しません。Git LFS は使用していません。通常 Git に大きな archive を置く方式は [GitHub の推奨リポジトリ容量](https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-large-files-on-github)を超えますが、Release asset が使えない場合の搬入経路を満たすために採用しています。
+
+配布 archive は 7,603,070,526 byte（77 part）です。結合後の SHA-256 は `a76e5cc80e7a12ca1b9743f1661c5b0fc69fd3522b0d7ce62de09ff56c517a5a` で、Release と fallback ブランチの `model.sha256` に記録します。各 part は最終分を除き 95 MiB で、[通常 Git の 100 MB 上限](https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-large-files-on-github)と [Release asset の 2 GiB 上限](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases)の両方に収まります。
 
 ## EC2 でのセットアップ
 
 ```bash
-git clone https://github.com/ShunsukeTamura06/jev-local.git
+git clone --single-branch --branch main https://github.com/ShunsukeTamura06/jev-local.git
 cd jev-local
 ./scripts/install_model.sh
 python3.12 -m venv .venv
@@ -65,4 +67,4 @@ curl -sS http://127.0.0.1:8008/v1/systemone \
 
 ## 検証範囲
 
-`scripts/smoke_test.sh` は CUDA 上のロード情報と 3 種類の API 応答を検査します。構築時の検証結果と、まだ実機確認が必要な項目は [Release の説明](https://github.com/ShunsukeTamura06/jev-local/releases/tag/model-v1) に記録します。
+`scripts/smoke_test.sh` は CUDA 上のロード情報と 3 種類の API 応答を検査します。構築時には元ウェイトの SHA-256、結合 archive の SHA-256、全24ファイルの展開名、API 形式テスト、インストーラーの正常系・破損検出・Git fallback を確認しました。CUDA ロードと推論は対象 EC2 上で `./scripts/start.sh` と `./scripts/smoke_test.sh` を実行して確認します。

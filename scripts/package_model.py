@@ -3,6 +3,7 @@
 import gzip
 import hashlib
 import json
+import shutil
 import subprocess
 import tarfile
 import tempfile
@@ -80,7 +81,7 @@ def download(path: str, expected_size: int, expected_sha256: str | None, temp: P
     url = f"https://huggingface.co/{BASE_REPO}/resolve/{BASE_REVISION}/{path}"
     if temp.exists() and temp.stat().st_size > expected_size:
         temp.unlink()
-    subprocess.run(["curl", "-fL", "--retry", "6", "--retry-all-errors", "--continue-at", "-", "--output", str(temp), url], check=True)
+    subprocess.run(["curl", "-fsSL", "--retry", "6", "--retry-all-errors", "--continue-at", "-", "--output", str(temp), url], check=True)
     if temp.stat().st_size != expected_size:
         raise RuntimeError(f"{path}: size mismatch: {temp.stat().st_size} != {expected_size}")
     if expected_sha256 and sha256(temp) != expected_sha256:
@@ -122,15 +123,18 @@ def main() -> None:
         raise RuntimeError("model-parts に既存の part があります。別ディレクトリーへ退避してください")
     api_url = f"https://huggingface.co/api/models/{BASE_REPO}/tree/{BASE_REVISION}?recursive=true&expand=true"
     listing = subprocess.run(["curl", "-fsSL", api_url], check=True, capture_output=True).stdout
-    files = [item for item in json.loads(listing) if item.get("type") == "file" and item["path"] != ".gitattributes"]
+    files = sorted(
+        (item for item in json.loads(listing) if item.get("type") == "file" and item["path"] != ".gitattributes"),
+        key=lambda item: item["path"],
+    )
     needed = {"LICENSE", "config.json", "model.safetensors.index.json", "tokenizer.json", "tokenizer_config.json"}
     if not needed.issubset({item["path"] for item in files}):
         raise RuntimeError("ベースモデルに必須ファイルがありません")
     adapter_cache = Path(tempfile.mkdtemp(prefix="kev-adapter-", dir=ROOT.parent))
-    adapter = fetch_adapter(adapter_cache)
     writer = SplitWriter(PARTS)
     temp = ROOT.parent / "base-download.tmp"
     try:
+        adapter = fetch_adapter(adapter_cache)
         with gzip.GzipFile(filename="", mode="wb", fileobj=writer, compresslevel=1, mtime=0) as compressed:
             with tarfile.open(fileobj=compressed, mode="w|") as archive:
                 for item in files:
@@ -147,7 +151,6 @@ def main() -> None:
         writer.close()
     finally:
         temp.unlink(missing_ok=True)
-        import shutil
         shutil.rmtree(adapter_cache)
     print(f"parts={len(writer.parts)} sha256={writer.digest.hexdigest()}")
 
