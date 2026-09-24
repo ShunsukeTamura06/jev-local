@@ -92,7 +92,7 @@ stream_parts | tar -xz -C "$temp_dir/extract"
   echo 'archive に必須モデルファイルがありません' >&2; exit 1;
 }
 printf '%s\n' "$actual" > "$temp_dir/extract/model/.installed.sha256"
-touch "$temp_dir/extract/model/.gitkeep"
+printf '\n' > "$temp_dir/extract/model/.gitkeep"
 rm -rf model
 mv "$temp_dir/extract/model" model
 echo "model/ へ展開しました。"
