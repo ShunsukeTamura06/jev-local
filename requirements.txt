@@ -1,0 +1,8 @@
+accelerate==1.15.0
+fastapi==0.135.1
+numpy==2.5.3
+peft==0.21.0
+pydantic==2.12.5
+torch==2.8.0
+transformers==5.17.0
+uvicorn==0.41.0
