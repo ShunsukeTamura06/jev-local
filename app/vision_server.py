@@ -61,7 +61,10 @@ def load_app(model_dir: Path) -> FastAPI:
         raise RuntimeError("モデル bundle.json が不正です。再インストールしてください")
     backend = build_backend("torch", adapter=adapter, bundle=bundle, rotations=4, max_input_tokens=4096)
     backend.model = "imajev-4b"
-    app = create_app(backend, calibration=TemperatureCalibrator.load(calibration))
+    calibrator = TemperatureCalibrator.load(calibration)
+    app = create_app(backend, calibration=calibrator)
+    from app.decision_api import register_decision_api
+    register_decision_api(app, backend, calibrator)
     key = os.getenv("KEV_API_KEY")
 
     @app.middleware("http")

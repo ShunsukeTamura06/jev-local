@@ -28,3 +28,5 @@ python3.12 -m venv .venv
 配布 archive の完全性と GitHub 配布先の検証を実施しています。A10G 実機での CUDA ロード・ピーク VRAM・遅延と写真・図表の精度比較は未実施です。この Release は PoC 用の prerelease です。
 
 コードの変更一式と評価手順は PR #3 と README を参照してください。
+
+新規接続の推奨 API は `POST /v1/decisions` です。`fields` に choice / boolean / ordinal を指定し、`results` の status / value と不明を含む scores を受け取ります。判断保留時の値は null です。`/v1/systemone` も互換経路として利用できます。新 API は上記のブランチの最新コードで利用してください。この重み配布タグに含まれる旧コードには新 API がありません。モデル重みの asset と manifest はそのまま使います。

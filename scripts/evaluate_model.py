@@ -16,7 +16,7 @@ def predict(url: str, case: dict, root: Path, api_key: str | None, timeout: floa
     """一件の事例をローカル API に送信する。
 
     Args:
-        url: /v1/systemone を含む URL。
+        url: /v1/decisions または互換 API を含む URL。
         case: request、images、gold を含む事例。
         root: 画像パスの基準ディレクトリー。
         api_key: 設定されている場合の Bearer キー。
@@ -60,26 +60,40 @@ def summarize(rows: list[dict]) -> dict:
     groups = defaultdict(list)
     for row in rows:
         for qid, gold in row["gold"].items():
-            answer = row["response"]["answers"][qid]
-            kind = answer["type"]
-            if kind == "choice":
+            native = "results" in row["response"]
+            answer = row["response"]["results" if native else "answers"][qid]
+            abstained = answer["status"] == "abstained" if native else bool(answer.get("abstained", False))
+            if native:
+                field = next(field for field in row["request"]["fields"] if field["id"] == qid)
+                kind = {"boolean": "noul", "ordinal": "score", "choice": "choice"}[field["type"]]
+                prediction = "__unknown__" if abstained else answer["value"]
+                key = "__unknown__" if abstained else ("true" if prediction is True else
+                       "false" if prediction is False else str(prediction))
+                confidence = answer["scores"][key] if kind != "score" else None
+                score = answer["value"] if kind == "score" else None
+            elif answer["type"] == "choice":
+                kind = "choice"
                 prediction = "__unknown__" if answer.get("abstained") else answer["choice"]
                 unknown = answer.get("unknown_probability", 0)
                 confidence = unknown if answer.get("abstained") else max(answer["probabilities"].values()) * (1 - unknown)
-            elif kind == "noul":
+            elif answer["type"] == "noul":
+                kind = "noul"
                 prediction = "__unknown__" if answer.get("abstained") else bool(answer["noul"] >= 0.5)
                 confidence = answer.get("unknown_probability", 0) if answer.get("abstained") else max(
                     answer["noul"], 1 - answer["noul"]
                 )
-            elif kind == "score":
+            elif answer["type"] == "score":
+                kind = "score"
                 prediction = "__unknown__" if answer.get("abstained") else round(answer["score"])
                 confidence = None
             else:
-                raise ValueError(f"未対応の質問型です: {kind}")
+                raise ValueError(f"未対応の質問型です: {answer['type']}")
+            if not native:
+                score = answer.get("score")
             category = row.get("category") or ("image" if row["images"] else "text")
             groups[(category, kind)].append(
-                (prediction == gold, abs(answer["score"] - gold) if kind == "score" and gold != "__unknown__" else None,
-                 bool(answer.get("abstained", False)), confidence)
+                (prediction == gold, abs(score - gold) if kind == "score" and
+                 not abstained and gold != "__unknown__" else None, abstained, confidence)
             )
     report = {}
     for (modality, kind), values in sorted(groups.items()):
@@ -97,6 +111,8 @@ def summarize(rows: list[dict]) -> dict:
                     sum(v[1] is not None for v in values)) if kind == "score" and
                    any(v[1] is not None for v in values) else None,
             "abstention_rate": sum(int(v[2]) for v in values) / n,
+            "answered_accuracy": (sum(int(v[0]) for v in values if not v[2]) /
+                                  sum(not v[2] for v in values)) if any(not v[2] for v in values) else None,
             "ece_10": ece,
         }
     return report
@@ -106,7 +122,7 @@ def main() -> None:
     """JSONL 事例を実行し、集計だけを JSON として保存する。"""
     parser = argparse.ArgumentParser()
     parser.add_argument("--cases", required=True, type=Path)
-    parser.add_argument("--url", default="http://127.0.0.1:8008/v1/systemone")
+    parser.add_argument("--url", default="http://127.0.0.1:8008/v1/decisions")
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--api-key")
     parser.add_argument("--timeout", type=float, default=120)
@@ -121,7 +137,7 @@ def main() -> None:
                 response = predict(args.url, case, args.cases.parent,
                                    args.api_key or os.getenv("KEV_API_KEY"), args.timeout)
                 rows.append({"gold": case["gold"], "images": case.get("images", []),
-                             "category": case.get("category"), "response": response})
+                             "category": case.get("category"), "request": case["request"], "response": response})
             except (OSError, ValueError, RuntimeError, KeyError) as error:
                 raise RuntimeError(f"{args.cases}:{line_number}: {error}") from error
     if not rows:

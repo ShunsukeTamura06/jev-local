@@ -47,6 +47,30 @@ class VisionWorkflowTest(unittest.TestCase):
                 evaluate_model.predict("http://127.0.0.1", {"request": {}, "images": ["../secret.png"]},
                                        Path(temp), None, 1)
 
+    def test_native_eval_uses_model_value_and_abstention(self) -> None:
+        """判断保留を値に変換せず、序数の MAE は回答分だけで測る。"""
+        rows = [{"images": [], "request": {"fields": [
+            {"id": "a", "type": "boolean"}, {"id": "b", "type": "ordinal"}, {"id": "c", "type": "ordinal"}]},
+            "gold": {"a": True, "b": 3, "c": 5}, "response": {"results": {
+                "a": {"status": "answered", "value": True, "scores": {"true": 0.8, "false": 0.1, "__unknown__": 0.1}},
+                "b": {"status": "answered", "value": 1, "scores": {"1": 0.8, "3": 0.1, "__unknown__": 0.1}},
+                "c": {"status": "abstained", "value": None, "scores": {"1": 0.1, "5": 0.1, "__unknown__": 0.8}},
+            }}}]
+        metrics = evaluate_model.summarize(rows)
+        self.assertEqual(metrics["text/noul"]["accuracy"], 1)
+        self.assertAlmostEqual(metrics["text/noul"]["ece_10"], 0.2)
+        self.assertEqual(metrics["text/score"]["mae"], 2)
+        self.assertEqual(metrics["text/score"]["abstention_rate"], 0.5)
+
+    def test_native_eval_unknown_is_a_valid_gold(self) -> None:
+        """不明が正解の事例では判断保留を正答として測る。"""
+        rows = [{"images": [], "request": {"fields": [{"id": "a", "type": "choice"}]},
+                 "gold": {"a": "__unknown__"}, "response": {"results": {
+                     "a": {"status": "abstained", "value": None, "scores": {"x": 0.1, "y": 0.1, "__unknown__": 0.8}}}}}]
+        metrics = evaluate_model.summarize(rows)["text/choice"]
+        self.assertEqual(metrics["accuracy"], 1)
+        self.assertIsNone(metrics["answered_accuracy"])
+
 
 if __name__ == "__main__":
     unittest.main()

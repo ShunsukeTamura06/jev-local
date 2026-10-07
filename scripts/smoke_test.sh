@@ -54,20 +54,32 @@ png = b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 64, 64, 8, 2
 model = call("/v1/models")
 assert model["model"] == "imajev-4b" and model["backend"] == "torch", model
 request = {
-    "model": "imajev-4b", "state": "A customer attached an image.",
+    "request_id": "smoke_1", "state": "A customer attached an image.",
     "images": ["data:image/png;base64," + base64.b64encode(png).decode()],
-    "questions": {
-        "route": {"type": "choice", "instructions": "Which team should review it?", "criteria": {"billing": "Payment issue", "other": "Other issue"}},
-        "visible": {"type": "noul", "instructions": "Is an image visible?"},
-        "urgency": {"type": "score", "instructions": "Rate urgency.", "criteria": ["low", "medium", "high"]},
-    },
+    "fields": [
+        {"id": "route", "type": "choice", "question": "Which team should review it?", "options": [
+            {"value": "billing", "description": "Payment issue"}, {"value": "other", "description": "Other issue"}]},
+        {"id": "visible", "type": "boolean", "question": "Is an image visible?"},
+        {"id": "urgency", "type": "ordinal", "question": "Rate urgency.", "levels": [
+            {"value": 0, "description": "low"}, {"value": 1, "description": "medium"}, {"value": 2, "description": "high"}]},
+    ],
 }
-body = call("/v1/systemone", request)
-answers = body["answers"]
-assert set(answers) == set(request["questions"]), body
-assert answers["route"]["choice"] in ("billing", "other") and 0 <= answers["route"]["unknown_probability"] <= 1, body
-assert 0 <= answers["visible"]["noul"] <= 1, body
-assert 0 <= answers["urgency"]["score"] <= 2, body
+body = call("/v1/decisions", request)
+answers = body["results"]
+assert body["request_id"] == request["request_id"], body
+assert set(answers) == {field["id"] for field in request["fields"]}, body
+for qid, result in answers.items():
+    assert result["status"] in ("answered", "abstained"), body
+    assert abs(sum(result["scores"].values()) - 1) < 1e-6, body
+    assert "__unknown__" in result["scores"] and "raw_logits" not in result, body
+    if result["status"] == "abstained":
+        assert result["value"] is None and result["reason"] == "insufficient_evidence", body
+    elif qid == "route":
+        assert result["value"] in ("billing", "other"), body
+    elif qid == "visible":
+        assert type(result["value"]) is bool, body
+    else:
+        assert result["value"] in (0, 1, 2), body
 assert len(body["usage"]["images"]) == 1, body
 print(json.dumps(answers, ensure_ascii=False, indent=2))
 PY
