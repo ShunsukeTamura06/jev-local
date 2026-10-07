@@ -1,4 +1,4 @@
-"""社内のラベル付き事例で decision API の精度を測定する。"""
+"""公開情報から作ったラベル付き事例で decision API の精度を測定する。"""
 
 import argparse
 import base64
