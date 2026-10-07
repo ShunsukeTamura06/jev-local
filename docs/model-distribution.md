@@ -39,6 +39,6 @@ cp work/vision-release/manifest.json models/imajev-4b-v1.json
 
 manifest をコードへコミットした後、そのコミットを対象に Release を作成し、全分割 asset と同じ manifest をアップロードする。重みを更新する場合は新しい Release tag と manifest を作成し、既存 asset を差し替えない。再梱包によって archive のハッシュが変わった場合も manifest のレビューと更新が必要である。
 
-GitHub Actions の `package-vision-model` workflow でも梱包と draft Release へのアップロードを実行できる。workflow は公開を自動では行わない。生成した `manifest.json` をコードに固定し、全 asset のサイズ・SHA-256 を確認した後にそのコードのコミットを対象として PoC の prerelease を公開する。既存の同名 Release がある場合は作成を拒否するため、新版の配布では tag と manifest を更新する。
+GitHub Actions の `package-vision-model` workflow でも梱包と draft Release へのアップロードを実行できる。コードに固定 manifest がある版では、再梱包せず配布済み asset のサイズ・SHA-256 を検証する。固定 manifest がまだない版では梱包とアップロードを実行するが、公開は自動では行わない。生成した `manifest.json` をコードに固定し、全 asset のサイズ・SHA-256 を確認した後にそのコードのコミットを対象として PoC の prerelease を公開する。既存の同名 Release がある場合は作成を拒否するため、新版の配布では tag と manifest を更新する。
 
 GPU ロードと写真・図表の精度評価は配布検証と別に EC2 上で実行する。この配布経路の変更だけで GPU の動作確認や精度改善を実証したことにはならない。

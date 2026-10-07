@@ -1,0 +1,179 @@
+{
+  "schema_version": 1,
+  "release_tag": "imajev-4b-v1",
+  "source_commit": "ccf586d43d2a580319b6535c893668904d909eb9",
+  "base_repo": "Qwen/Qwen3.5-4B",
+  "base_commit": "851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a",
+  "adapter_repo": "mohit67890/imajev-4b",
+  "adapter_commit": "f8d8234cebc6c99065c07731e59716dc0a6e27ab",
+  "license": "Apache-2.0",
+  "weights_modified": false,
+  "archive": {
+    "name": "imajev-model.tar.gz",
+    "sha256": "d111a839ba779ed31798e167d7b53c38d306ced36e5bf2d8d65871e433e6bb32"
+  },
+  "parts": [
+    {
+      "name": "imajev-model.tar.gz.part-0000",
+      "size": 1073741824,
+      "sha256": "56fd78e057edf36e9eff97b7742e2b3e53bd4633a24ddfadbe4e7724784768b1"
+    },
+    {
+      "name": "imajev-model.tar.gz.part-0001",
+      "size": 1073741824,
+      "sha256": "e3ca8a4c7b10afdc5e574312b4a421d3d71058e65ec74333062f9127d53c3c03"
+    },
+    {
+      "name": "imajev-model.tar.gz.part-0002",
+      "size": 1073741824,
+      "sha256": "06c32b4c8446c62e18fed08863a50ade9f6b6ccee50d80653dbb90fac534059c"
+    },
+    {
+      "name": "imajev-model.tar.gz.part-0003",
+      "size": 1073741824,
+      "sha256": "25fa1dd859b77247590e9b62c8cc7a5da08d242ac79bd576429e402dd4666f5b"
+    },
+    {
+      "name": "imajev-model.tar.gz.part-0004",
+      "size": 1073741824,
+      "sha256": "f0c6e7cfeaa3a8e2a4eb79beb11af5303c8c395dbc7b60d28209a9ae77175972"
+    },
+    {
+      "name": "imajev-model.tar.gz.part-0005",
+      "size": 1073741824,
+      "sha256": "6a2ee165c6b83b0a439514ef4a574128fd0270874641fcc2bb96c49cee1e91c0"
+    },
+    {
+      "name": "imajev-model.tar.gz.part-0006",
+      "size": 1073741824,
+      "sha256": "e38a54ec2f7a18a7209c944126878b362e676a7553bda3ec7340c5f76e16e348"
+    },
+    {
+      "name": "imajev-model.tar.gz.part-0007",
+      "size": 1073741824,
+      "sha256": "522a3401ae41192f3dd94cb1842eedc5d4df802f00fb8fb67c81729d2f231795"
+    },
+    {
+      "name": "imajev-model.tar.gz.part-0008",
+      "size": 1073741824,
+      "sha256": "8e0d1343e9580047eb04d897dddff139f28a94bf3c74ed75a7ddb82f3d8dd361"
+    },
+    {
+      "name": "imajev-model.tar.gz.part-0009",
+      "size": 170580857,
+      "sha256": "5142bcef97d5247dad4fceda3042ebfa38358bddb709da75d6d18d0891507667"
+    }
+  ],
+  "files": [
+    {
+      "path": "base/LICENSE",
+      "size": 11544,
+      "sha256": "bbedc3fda3305820b977265f01b8619d87570a6739de3a5582c3464840f1e57a"
+    },
+    {
+      "path": "licenses/APACHE-2.0.txt",
+      "size": 11544,
+      "sha256": "bbedc3fda3305820b977265f01b8619d87570a6739de3a5582c3464840f1e57a"
+    },
+    {
+      "path": "base/README.md",
+      "size": 77661,
+      "sha256": "1406be1b6b8fd8a6545870da516912804756593628a1d0fb0a7965211e82a7bb"
+    },
+    {
+      "path": "base/chat_template.jinja",
+      "size": 7756,
+      "sha256": "a4aee8afcf2e0711942cf848899be66016f8d14a889ff9ede07bca099c28f715"
+    },
+    {
+      "path": "base/config.json",
+      "size": 3161,
+      "sha256": "ddc63e1c717afa86c865bb5e01313d89d72bb53b97ad4a8a03ba8510c0621670"
+    },
+    {
+      "path": "base/merges.txt",
+      "size": 3353259,
+      "sha256": "a9d356d7bdf1ef4949e3e748e95b8e10ad9d4e2e838eddc38a0a7b6b94d1db8d"
+    },
+    {
+      "path": "base/model.safetensors-00001-of-00002.safetensors",
+      "size": 5329398688,
+      "sha256": "26a93f066e1916adb13453dae5a0c707c0fbc71299ed98779571a907b8e74c61"
+    },
+    {
+      "path": "base/model.safetensors-00002-of-00002.safetensors",
+      "size": 3990429408,
+      "sha256": "cb544bd9bfae93dc59b0f22b292f5933573854a7f9b97835c67060d7d910e188"
+    },
+    {
+      "path": "base/model.safetensors.index.json",
+      "size": 76196,
+      "sha256": "cf3f798ee02ba45f9622aa8892a47369ab667d0afbf154ee7c2212de42e6302d"
+    },
+    {
+      "path": "base/preprocessor_config.json",
+      "size": 390,
+      "sha256": "27225450ac9c6529872ee1924fcb0962ff5634834f817040f444118116f4e516"
+    },
+    {
+      "path": "base/tokenizer.json",
+      "size": 12807982,
+      "sha256": "5f9e4d4901a92b997e463c1f46055088b6cca5ca61a6522d1b9f64c4bb81cb42"
+    },
+    {
+      "path": "base/tokenizer_config.json",
+      "size": 16710,
+      "sha256": "316230d6a809701f4db5ea8f8fc862bc3a6f3229c937c174e674ff3ca0a64ac8"
+    },
+    {
+      "path": "base/video_preprocessor_config.json",
+      "size": 385,
+      "sha256": "7768af27c1fafa9cc9011c1dc20067e03f8915e03b63504550e11d5066986d13"
+    },
+    {
+      "path": "base/vocab.json",
+      "size": 6722759,
+      "sha256": "ce99b4cb2983d118806ce0a8b777a35b093e2000a503ebde25853284c9dfa003"
+    },
+    {
+      "path": "adapter/README.md",
+      "size": 26565,
+      "sha256": "7a2aa695acc2c16d2f0c3d1242bc998f75c9132197fef3bf7690d09eb2e2f9ad"
+    },
+    {
+      "path": "adapter/SHA256SUMS",
+      "size": 1093,
+      "sha256": "c76118e5d5acbb4fa87506bde0c402cc879cca6bede489533e36fcc5689137a6"
+    },
+    {
+      "path": "adapter/adapter_config.json",
+      "size": 1375,
+      "sha256": "a5bad80823e9768c82a8e7459bec6c6b77f835306ddcc9b3ecfe514238b5806e"
+    },
+    {
+      "path": "adapter/adapter_model.safetensors",
+      "size": 487648432,
+      "sha256": "88c2c44361e0c469352495abcfee789ff73a4deae0811168d9402cfc2b6e749c"
+    },
+    {
+      "path": "adapter/calibration-rot4.json",
+      "size": 1283,
+      "sha256": "1ef51558c476d27b04b729a5144d81fcaa19d860abc2f51e72c2e9d89268de4b"
+    },
+    {
+      "path": "adapter/decision_readout.json",
+      "size": 14421,
+      "sha256": "4bc0237812d7d8c2611e60f1e7d0de8f108a9c18fbb8402aefecc3c71c54d68c"
+    },
+    {
+      "path": "adapter/decision_readout.safetensors",
+      "size": 2621520,
+      "sha256": "52ceafd7d824bf3ea5ce55276b48cc08ba9dd6b2c98a55d9bd6a72ed1643a427"
+    },
+    {
+      "path": "provenance.json",
+      "size": 323,
+      "sha256": "6b55512ccbe09c2a56882dc2b6c67048e440c166c6a7e834832b2803a8d32cac"
+    }
+  ]
+}
