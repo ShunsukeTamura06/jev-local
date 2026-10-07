@@ -1,0 +1,116 @@
+name: package-vision-model
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feat/imajev-vision]
+    paths: [.github/workflows/publish-vision-model.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Package pinned upstream weights
+        run: python scripts/package_vision_model.py --output "$RUNNER_TEMP/vision-release"
+      - name: Verify packaged archive without extracting weights
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          import tarfile
+          from pathlib import Path
+          from scripts.install_vision_model import PartReader, sha256, validate_manifest
+
+          directory = Path(os.environ['RUNNER_TEMP']) / 'vision-release'
+          manifest = json.loads((directory / 'manifest.json').read_text())
+          validate_manifest(manifest)
+          digest = hashlib.sha256()
+          paths = []
+          for part in manifest['parts']:
+              path = directory / part['name']
+              assert path.stat().st_size == part['size'], path.name
+              assert sha256(path) == part['sha256'], path.name
+              with path.open('rb') as stream:
+                  for block in iter(lambda: stream.read(8 * 1024 * 1024), b''):
+                      digest.update(block)
+              paths.append(path)
+          assert digest.hexdigest() == manifest['archive']['sha256']
+          expected = {'model/imajev/' + item['path']: item for item in manifest['files']}
+          seen = set()
+          reader = PartReader(paths)
+          index = None
+          try:
+              with tarfile.open(fileobj=reader, mode='r|gz') as archive:
+                  for member in archive:
+                      assert member.name in expected and member.isfile() and member.name not in seen, member.name
+                      assert member.size == expected[member.name]['size'], member.name
+                      file_digest = hashlib.sha256()
+                      small = bytearray()
+                      stream = archive.extractfile(member)
+                      for block in iter(lambda: stream.read(8 * 1024 * 1024), b''):
+                          file_digest.update(block)
+                          if member.name.endswith('model.safetensors.index.json'):
+                              small.extend(block)
+                      assert file_digest.hexdigest() == expected[member.name]['sha256'], member.name
+                      if small:
+                          index = json.loads(small)
+                      seen.add(member.name)
+          finally:
+              reader.close()
+          assert seen == set(expected)
+          assert index is not None
+          assert {'model/imajev/base/' + shard for shard in index['weight_map'].values()}.issubset(seen)
+          print(f"分割 asset {len(paths)} 件と archive 内 {len(seen)} ファイルを検証しました。")
+          PY
+      - name: Upload draft release
+        run: |
+          curl -fsSL --retry 6 \
+            https://raw.githubusercontent.com/mohit67890/imajev/ccf586d43d2a580319b6535c893668904d909eb9/LICENSE \
+            -o "$RUNNER_TEMP/vision-release/IMAJEV-LICENSE"
+          gh release create imajev-4b-v1 --draft --prerelease --latest=false \
+            --target "$GITHUB_SHA" --title 'imajev-4b GitHub 配布 PoC v1' \
+            --notes-file docs/imajev-release-notes.md
+          gh release upload imajev-4b-v1 \
+            "$RUNNER_TEMP"/vision-release/imajev-model.tar.gz.part-* \
+            "$RUNNER_TEMP/vision-release/manifest.json" \
+            "$RUNNER_TEMP/vision-release/IMAJEV-LICENSE"
+      - name: Verify uploaded asset hashes
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          import subprocess
+          from pathlib import Path
+
+          directory = Path(os.environ['RUNNER_TEMP']) / 'vision-release'
+          manifest = json.loads((directory / 'manifest.json').read_text())
+          release = json.loads(subprocess.check_output([
+              'gh', 'api', f"repos/{os.environ['GH_REPO']}/releases/tags/imajev-4b-v1"
+          ]))
+          remote = {asset['name']: asset for asset in release['assets']}
+          expected = {part['name']: part for part in manifest['parts']}
+          for name in ('manifest.json', 'IMAJEV-LICENSE'):
+              path = directory / name
+              expected[name] = {'size': path.stat().st_size,
+                                'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
+          for name, item in expected.items():
+              asset = remote[name]
+              assert asset['state'] == 'uploaded', name
+              assert asset['size'] == item['size'], name
+              assert asset['digest'] == 'sha256:' + item['sha256'], name
+          print(f"GitHub の asset {len(expected)} 件のサイズと SHA-256 を検証しました。")
+          print('archive SHA-256:', manifest['archive']['sha256'])
+          PY

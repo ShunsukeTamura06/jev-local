@@ -36,6 +36,7 @@
 - 推論コード: `mohit67890/imajev` @ `ccf586d43d2a580319b6535c893668904d909eb9`（[コード](https://github.com/mohit67890/imajev/tree/ccf586d43d2a580319b6535c893668904d909eb9)）
 - ベース: `Qwen/Qwen3.5-4B` @ `851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a`
 - アダプター: `mohit67890/imajev-4b` @ `f8d8234cebc6c99065c07731e59716dc0a6e27ab`
+- 配布: [GitHub Release `imajev-4b-v1`](https://github.com/ShunsukeTamura06/jev-local/releases/tag/imajev-4b-v1)。EC2 の Hugging Face 接続制限に合わせ、固定版の重みを変更せず再梱包する。各 asset とファイルの SHA-256 を `models/imajev-4b-v1.json` に固定する。[配布手順](model-distribution.md)を参照。
 - 応答校正: 上記アダプター内の `calibration-rot4.json`。候補の表示順を 4 回変えて平均する上流の公開評価条件に合わせる。
 - 依存関係: `requirements.vision.lock`、Python 3.12、x86_64 Linux。torch 2.8.0 と torchvision 0.23.0 の組合せは [PyTorch の案内](https://pytorch.org/get-started/previous-versions/)にある。
 

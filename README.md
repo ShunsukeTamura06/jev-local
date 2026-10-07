@@ -2,14 +2,14 @@
 
 公開情報のみを扱う社内 PoC の画像対応 decision API です。既定モデルは [imajev-4b](https://huggingface.co/mohit67890/imajev-4b) で、写真・図表とテキストを合わせて `choice`、`noul`、`score` を返します。モデルはサーバー内のローカルファイルから読み、推論時に外部 API へ送りません。採用理由、比較、未検証事項は [調査記録](docs/model-selection-2026-10.md) を参照してください。
 
-既存の Kev-4B は残してあり、旧セットアップの説明は [Kev 運用記録](docs/kev-legacy.md) にあります。既存の `model-parts-v1` ブランチや GitHub Release は imajev の配布には使いません。
+既存の Kev-4B は残してあり、旧セットアップの説明は [Kev 運用記録](docs/kev-legacy.md) にあります。imajev の重みは専用の [GitHub Release `imajev-4b-v1`](https://github.com/ShunsukeTamura06/jev-local/releases/tag/imajev-4b-v1) から取得します。EC2 側から Hugging Face に接続する必要はありません。
 
 ## 必要な環境
 
-- x86_64 Linux、Python 3.12、Git、NVIDIA A10G 24 GiB（従来の EC2 g5.4xlarge を想定）
+- x86_64 Linux、Python 3.12、Git、curl、NVIDIA A10G 24 GiB（従来の EC2 g5.4xlarge を想定）
 - PyTorch 2.8.0 / CUDA 12.8 に対応する NVIDIA ドライバー 570.26 以降
 - ベース重み約 9.3 GB、アダプター約 0.5 GB と Python 環境を置く EBS 空き容量。安全な目安は 35 GiB 以上
-- セットアップ時に GitHub、Hugging Face、Python パッケージインデックスへ HTTPS 接続可能であること
+- セットアップ時に GitHub（Release asset の配信先を含む）と Python パッケージインデックスへ HTTPS 接続可能であること
 
 ## インストールと起動
 
@@ -21,7 +21,11 @@ nvidia-smi
 ./scripts/start.sh
 ```
 
-インストーラーは上流の推論コード、Qwen3.5-4B ベース、imajev-4b アダプターを固定コミットで `model/imajev/` に保存します。アダプターは上流の `SHA256SUMS` で検証します。ダウンロードに失敗しても完了マーカーを作らないため、同じコマンドで再試行できます。`start.sh` は CUDA がない場合やファイルが欠けている場合に起動しません。既定の待受先は `127.0.0.1:8008` です。
+インストーラーは GitHub Release の分割 asset を取得し、[固定 manifest](models/imajev-4b-v1.json) のサイズ・SHA-256、結合 archive の SHA-256、展開した各ファイルの SHA-256 を検証して `model/imajev/` に保存します。アダプターは上流の `SHA256SUMS` でも検証します。重みは元の固定コミットから変更していません。ライセンスと出典も同梱しています。推論コードは GitHub の固定コミットから取得します。
+
+取得に失敗した場合は同じコマンドで再試行できます。分割 asset は `model/.imajev-download/` に保存され、検証済み asset を再利用し、途中の取得を再開します。導入成功後に取得用 cache を削除します。正常な同一版の導入済み重みは再取得しません。再取得を指定する場合は `./scripts/install_vision_model.sh --force` を使います。`start.sh` は CUDA がない場合やファイルが欠けている場合に起動しません。既定の待受先は `127.0.0.1:8008` です。
+
+Release asset を別の端末で取得して EC2 に搬入した場合は、全分割ファイルがあるディレクトリーを `./scripts/install_vision_model.sh --assets-dir /path/to/assets` で指定できます。この場合も固定 manifest で検証します。GitHub CLI、Git LFS、Hugging Face のアカウントは不要です。配布物の再作成は [配布手順](docs/model-distribution.md) を参照してください。
 
 外部から到達できるようにする場合は認証付きプロキシを用意し、`KEV_API_KEY` を設定してください。既存の環境変数名を継続して使用します。
 
