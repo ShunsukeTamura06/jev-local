@@ -1,0 +1,4 @@
+-r requirements.txt
+Pillow==11.3.0
+python-multipart==0.0.20
+torchvision==0.23.0

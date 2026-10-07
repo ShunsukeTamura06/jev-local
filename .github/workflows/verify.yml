@@ -14,8 +14,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: python -m pip install pydantic==2.12.5
+      - run: python -m pip install -c requirements.vision.lock pydantic fastapi httpx numpy pillow python-multipart
+      - name: Fetch pinned API contracts without model weights
+        run: |
+          source_ref=$(python -c 'from scripts.install_vision_model import SOURCE_COMMIT; print(SOURCE_COMMIT)')
+          git init work/imajev-upstream
+          git -C work/imajev-upstream remote add origin https://github.com/mohit67890/imajev.git
+          git -C work/imajev-upstream fetch --depth 1 origin "$source_ref"
+          git -C work/imajev-upstream checkout --detach FETCH_HEAD
       - run: python -m unittest discover -s tests -p 'test_*.py' -v
+        env:
+          PYTHONPATH: ${{ github.workspace }}/work/imajev-upstream/src:${{ github.workspace }}/work/imajev-upstream
       - run: tests/install_model_test.sh
-      - run: python -m compileall -q app kev scripts/package_model.py
+      - run: python -m compileall -q app kev scripts
       - run: bash -n scripts/*.sh tests/*.sh
