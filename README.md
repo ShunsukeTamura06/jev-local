@@ -75,6 +75,6 @@ with urllib.request.urlopen(http_request, timeout=120) as response:
 .venv/bin/python scripts/evaluate_model.py --cases public-eval/cases.jsonl --output public-eval/imajev-report.json
 ```
 
-写真、図表、テキストのみを分けて収集し、Kev を使っている既存業務に近い公開テキスト事例も同じ正解で比較してください。少なくとも choice / noul の正答率、校正誤差、棄権率、score の MAE、遅延を確認し、用途ごとに許容値を決めてから PoC の接続先を切り替えてください。開発者の公開ベンチマークの数値だけでは、この PoC での精度を保証できません。非商用 PoC の軽量な比較候補である Laya Vision についても [調査記録](docs/model-selection-2026-10.md) に制約を記載しています。
+写真、図表、テキストのみを分けて収集し、Kev を使っている既存業務に近い公開テキスト事例も同じ正解で比較してください。少なくとも choice / noul の正答率、校正誤差、棄権率、score の MAE、遅延を確認し、用途ごとに許容値を決めてから PoC の接続先を切り替えてください。開発者の公開ベンチマークの数値だけでは、この PoC での精度を保証できません。画像の精度は同じベースの汎用 VLM である Qwen3.5-4B とも比較が必要です。非商用 PoC の軽量な比較候補である Laya Vision についても [調査記録](docs/model-selection-2026-10.md) に制約を記載しています。
 
 旧 Kev を再起動する場合は `./scripts/install_model.sh` で旧重みを配置し、`.venv/bin/python -m app.server` を実行します。現在の `start.sh` は imajev を起動します。
