@@ -1,6 +1,6 @@
 # jev-local
 
-社内の画像対応 decision API です。既定モデルは [imajev-4b](https://huggingface.co/mohit67890/imajev-4b) で、写真・図表とテキストを合わせて `choice`、`noul`、`score` を返します。モデルはサーバー内のローカルファイルから読み、推論時に外部 API へ送りません。採用理由、比較、未検証事項は [調査記録](docs/model-selection-2026-10.md) を参照してください。
+公開情報のみを扱う社内 PoC の画像対応 decision API です。既定モデルは [imajev-4b](https://huggingface.co/mohit67890/imajev-4b) で、写真・図表とテキストを合わせて `choice`、`noul`、`score` を返します。モデルはサーバー内のローカルファイルから読み、推論時に外部 API へ送りません。採用理由、比較、未検証事項は [調査記録](docs/model-selection-2026-10.md) を参照してください。
 
 既存の Kev-4B は残してあり、旧セットアップの説明は [Kev 運用記録](docs/kev-legacy.md) にあります。既存の `model-parts-v1` ブランチや GitHub Release は imajev の配布には使いません。
 
@@ -63,18 +63,18 @@ with urllib.request.urlopen(http_request, timeout=120) as response:
 
 レスポンスには `answers` とともに `unknown_probability`、`abstained` が含まれます。選択肢の確率は既知の候補で再正規化され、候補外の確率は別フィールドです。`GET /v1/models` でロード済みモデルを確認できます。上流の入力上限は 2 画像、8 質問、4,096 トークンで、画像は最大 20 MiB / 20 メガピクセルです。質問や選択肢は英語での学習・評価が中心です。
 
-## 社内評価と切り替え
+## PoC 評価と切り替え
 
-`./scripts/smoke_test.sh` は画像を含む呼び出しの入出力契約だけを確認します。社内の正解付き事例で精度を測るには、1 行に 1 事例の JSONL を用意します。画像パスは JSONL と同じディレクトリーを基準に指定します。入力内容は集計レポートに保存しません。
+`./scripts/smoke_test.sh` は画像を含む呼び出しの入出力契約だけを確認します。公開情報から作った正解付き事例で精度を測るには、1 行に 1 事例の JSONL を用意します。画像パスは JSONL と同じディレクトリーを基準に指定します。入力内容は集計レポートに保存しません。
 
 ```json
 {"category":"photo","request":{"state":{"note":"Check the photo."},"questions":{"damage":{"type":"noul","instructions":"Is the item damaged?"}}},"images":["photo.jpg"],"gold":{"damage":true}}
 ```
 
 ```bash
-.venv/bin/python scripts/evaluate_model.py --cases private-eval/cases.jsonl --output private-eval/imajev-report.json
+.venv/bin/python scripts/evaluate_model.py --cases public-eval/cases.jsonl --output public-eval/imajev-report.json
 ```
 
-写真、図表、テキストのみを分けて収集し、Kev を使っている既存業務のテキスト事例も同じ正解で比較してください。少なくとも choice / noul の正答率、校正誤差、棄権率、score の MAE、遅延を確認し、用途ごとに許容値を決めてから本番トラフィックを切り替えてください。公開ベンチマークの数値だけでは社内精度を保証できません。
+写真、図表、テキストのみを分けて収集し、Kev を使っている既存業務に近い公開テキスト事例も同じ正解で比較してください。少なくとも choice / noul の正答率、校正誤差、棄権率、score の MAE、遅延を確認し、用途ごとに許容値を決めてから PoC の接続先を切り替えてください。開発者の公開ベンチマークの数値だけでは、この PoC での精度を保証できません。非商用 PoC の軽量な比較候補である Laya Vision についても [調査記録](docs/model-selection-2026-10.md) に制約を記載しています。
 
 旧 Kev を再起動する場合は `./scripts/install_model.sh` で旧重みを配置し、`.venv/bin/python -m app.server` を実行します。現在の `start.sh` は imajev を起動します。
