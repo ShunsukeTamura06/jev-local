@@ -5,6 +5,7 @@ import hmac
 import json
 import os
 import sys
+import uuid
 from pathlib import Path
 from typing import Awaitable, Callable
 
@@ -77,9 +78,12 @@ def load_app(model_dir: Path) -> FastAPI:
         if key and request.url.path.startswith("/v1/") and not hmac.compare_digest(
             request.headers.get("authorization", ""), f"Bearer {key}"
         ):
-            return JSONResponse({"detail": "invalid API key"}, status_code=401,
-                                headers={"WWW-Authenticate": "Bearer"})
-        return await call_next(request)
+            response = JSONResponse({"detail": "invalid API key"}, status_code=401,
+                                    headers={"WWW-Authenticate": "Bearer"})
+        else:
+            response = await call_next(request)
+        response.headers["x-typesafe-request-id"] = request.headers.get("x-typesafe-request-id") or uuid.uuid4().hex
+        return response
 
     return app
 
